@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/carolina.ovidio/Documents/lncc/matrix_esparsas/code/output/matrix'
+relocations:     []
+...
