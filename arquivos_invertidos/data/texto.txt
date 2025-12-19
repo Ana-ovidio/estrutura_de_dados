@@ -1,0 +1,3 @@
+This program builds an index.
+Programs written in C are fast.
+Index structures are useful.
