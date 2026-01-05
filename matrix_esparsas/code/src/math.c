@@ -27,9 +27,8 @@
  */
 int matrix_addelem(Matrix *m, int i, int j, float delta) {
     if (!m || !m->mat) return 1;
-    if (i < 1 || i > m->linhas) return 1;
-    if (j < 1 || j > m->colunas) return 1;
-    if (delta == 0.0f) return 0;
+    if (i < 1 || i > m->linhas) return 2;
+    if (j < 1 || j > m->colunas) return 2;
 
     int linha = i - 1;
     POINT anterior = NULL;
@@ -42,25 +41,31 @@ int matrix_addelem(Matrix *m, int i, int j, float delta) {
 
     if (atual && atual->coluna == j) {
         float nv = atual->valor + delta;
+
         if (nv == 0.0f) {
             if (anterior) anterior->prox = atual->prox;
             else m->mat[linha] = atual->prox;
+            free(atual);
             return 0;
         }
+
         atual->valor = nv;
         return 0;
     }
 
     No *novo = (No*)malloc(sizeof(No));
+    if (!novo) return 1;
+
     novo->coluna = j;
     novo->valor = delta;
     novo->prox = atual;
 
-    if (!anterior) m->mat[linha] = novo;
-    else anterior->prox = novo;
+    if (anterior) anterior->prox = novo;
+    else m->mat[linha] = novo;
 
     return 0;
 }
+
 
 /**
  * @brief Calcula a soma de duas matrizes esparsas de mesmas dimensões.
@@ -87,10 +92,13 @@ int matrix_addelem(Matrix *m, int i, int j, float delta) {
  * @post Em sucesso, `*r` aponta para uma nova matriz alocada; em erro, `*r` permanece NULL.
  */
 int matrix_add(const Matrix *m, const Matrix *n, Matrix **r) {
-    if (!m || !n) return 1;
+    if (!m || !n || !r) return 1;
+    if (!m->mat || !n->mat) return 1;
     if (m->linhas != n->linhas || m->colunas != n->colunas) return 1;
 
+    *r = NULL;
     Matrix *matrix_resultado = init_matrix(m->linhas, m->colunas);
+    if (!matrix_resultado) return 1;
 
     for (int i = 0; i < m->linhas; i++) {
         POINT pm = m->mat[i];
@@ -104,7 +112,7 @@ int matrix_add(const Matrix *m, const Matrix *n, Matrix **r) {
                 col = pm->coluna;
                 val = pm->valor;
                 pm = pm->prox;
-            } else if (!pm || (pn && pn->coluna < pm->coluna)) {
+            } else if (!pm || pn->coluna < pm->coluna) {
                 col = pn->coluna;
                 val = pn->valor;
                 pn = pn->prox;
@@ -147,6 +155,8 @@ int matrix_add(const Matrix *m, const Matrix *n, Matrix **r) {
  * @post Em sucesso, `*r` aponta para a transposta de `m`; em erro, `*r` permanece NULL.
  */
 int matrix_transpose(const Matrix *m, Matrix **r) {
+    if (!m || !m->mat || !r) return 1;
+
     *r = NULL;
     Matrix *res = init_matrix(m->colunas, m->linhas);
     if (!res) return 1;
@@ -154,6 +164,7 @@ int matrix_transpose(const Matrix *m, Matrix **r) {
     for (int i = 0; i < m->linhas; i++) {
         POINT atual = m->mat[i];
         while (atual) {
+            
             int rr = matrix_setelem(res, atual->coluna, i + 1, atual->valor);
             if (rr) {
                 matrix_destroy(res);
@@ -192,21 +203,33 @@ int matrix_transpose(const Matrix *m, Matrix **r) {
  * @post Em sucesso, `*r` aponta para uma nova matriz alocada com o produto; em erro, `*r` permanece NULL.
  */
 int matrix_multiply(const Matrix *m, const Matrix *n, Matrix **r) {
+    if (!m || !n || !r) return 1;
+    if (!m->mat || !n->mat) return 1;
+    if (m->colunas != n->linhas) return 1;
+
     *r = NULL;
     Matrix *matrix_resultado = init_matrix(m->linhas, n->colunas);
-
+    if (!matrix_resultado) return 1;
 
     for (int i = 0; i < m->linhas; i++) {
         POINT pm = m->mat[i];
 
         while (pm) {
             int k = pm->coluna;
+            if (k < 1 || k > n->linhas) {
+                matrix_destroy(matrix_resultado);
+                return 2;
+            }
+
             POINT pn = n->mat[k - 1];
 
             while (pn) {
                 float prod = pm->valor * pn->valor;
-                if (prod != 0.0f) {
-                    int check = matrix_addelem(matrix_resultado, i + 1, pn->coluna, prod);
+                if (prod != 0.0) {
+                    int check = matrix_addelem(matrix_resultado,
+                                               i + 1,
+                                               pn->coluna,
+                                               prod);
                     if (check) {
                         matrix_destroy(matrix_resultado);
                         return check;
@@ -214,7 +237,6 @@ int matrix_multiply(const Matrix *m, const Matrix *n, Matrix **r) {
                 }
                 pn = pn->prox;
             }
-
             pm = pm->prox;
         }
     }

@@ -1,4 +1,5 @@
 #include "manipulate.h"
+#include <math.h>
 
 /**
  * @brief Obtém o valor de um elemento da matriz esparsa.
@@ -25,7 +26,7 @@
  *       não estiver explicitamente armazenado.
  */
 
-int matrix_getelem(const Matrix *m, int x, int y, float *elem) {
+ int matrix_getelem(const Matrix *m, int x, int y, float *elem) {
     if (!m || !elem || !m->mat) return 1;
     if (x < 1 || x > m->linhas) return 1;
     if (y < 1 || y > m->colunas) return 1;
@@ -36,8 +37,11 @@ int matrix_getelem(const Matrix *m, int x, int y, float *elem) {
         atual = atual->prox;
     }
 
-    if (atual && atual->coluna == y) *elem = atual->valor;
-    else *elem = 0.0f;
+    if (atual && atual->coluna == y) {
+        *elem = atual->valor;
+    } else {
+        *elem = 0.0f;
+    }
 
     return 0;
 }

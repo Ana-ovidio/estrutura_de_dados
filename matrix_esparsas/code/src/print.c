@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "print.h"
+#include <math.h>
 
 void matrix_print(const Matrix *m) {
     if (!m) return;

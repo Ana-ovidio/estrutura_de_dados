@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include "create.h"
 #include "inputs.h"
+#include <math.h>
+
+//helper
+void clear_stdin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
 
 /**
  * @brief Lê elementos de uma matriz a partir da entrada padrão e insere na matriz.
@@ -24,31 +31,39 @@
  * @post A matriz contém os elementos inseridos (valores 0.0 removem o elemento, via `matrix_setelem`).
  */
 int insert_matrix_stdin(const char *label, Matrix *m) {
-    printf("\n[%s] Digite elementos no formato: i j valor (0 para terminar)\n", label ? label : "Matriz");
+    if (!m || !m->mat) return 1;
 
-    int fim = 0;
-    while (!fim) {
+    printf("\n[%s] Digite elementos no formato: i j valor (0 para terminar)\n",
+           label ? label : "Matriz");
+
+    int run = 1;
+    while (run) {
         int i, j;
         float valor;
 
         printf("[%s] i = ", label ? label : "Matriz");
-        if (scanf("%d", &i) != 1) return 1;
+        if (scanf("%d", &i) != 1) {
+            clear_stdin();
+            return 1;
+        }
+
         if (i == 0) break;
 
         printf("[%s] j valor = ", label ? label : "Matriz");
-        if (scanf("%d %f", &j, &valor) != 2) return 2;
+        if (scanf("%d %f", &j, &valor) != 2) {
+            clear_stdin();
+            return 1;
+        }
 
         int error = matrix_setelem(m, i, j, valor);
         if (error) {
-            fprintf(stderr, "[%s] Erro ao inserir (%d, %d, %.2f). codigo=%d\n",
+            fprintf(stderr,
+                    "[%s] Erro ao inserir (%d, %d, %.2f). codigo=%d\n",
                     label ? label : "Matriz", i, j, valor, error);
             return error;
         }
 
-        printf("[%s] inserido: (%d, %d) = %.2f\n", label ? label : "Matriz", i, j, valor);
     }
-
-    printf("[%s] fim da entrada.\n", label ? label : "Matriz");
     return 0;
 }
 
@@ -77,7 +92,12 @@ Matrix* init_matrix(int linhas, int colunas) {
     mat->linhas = linhas;
     mat->colunas = colunas;
 
-    mat->mat = (POINT*)malloc((size_t)linhas * sizeof(POINT));
+    mat->mat = (POINT*)malloc((float)linhas * sizeof(POINT));
+    if (!mat->mat) {
+        free(mat);
+        return NULL;
+    }
+
     for (int i = 0; i < linhas; i++) mat->mat[i] = NULL;
     return mat;
 }
@@ -135,10 +155,12 @@ int matrix_destroy_labeled(const char *label, Matrix *m) {
         printf("[DESTROY %s] (NULL)\n", label ? label : "");
         return 1;
     }
+
     printf("[DESTROY %s] liberando matriz (%d x %d)\n",
            label ? label : "", m->linhas, m->colunas);
     return matrix_destroy(m);
 }
+
 
 /**
  * @brief Insere, atualiza ou remove um elemento (i, j) na matriz esparsa.
@@ -186,21 +208,23 @@ int matrix_setelem(Matrix *m, int i, int j, float valor) {
             if (anterior) anterior->prox = atual->prox;
             else m->mat[linha] = atual->prox;
             free(atual);
-            return 0;
+        } else {
+            atual->valor = valor;
         }
-        atual->valor = valor;
         return 0;
     }
 
     if (valor == 0.0f) return 0;
 
     No *novo = (No*)malloc(sizeof(No));
+    if (!novo) return 1;
+
     novo->coluna = j;
     novo->valor = valor;
     novo->prox = atual;
 
-    if (!anterior) m->mat[linha] = novo;
-    else anterior->prox = novo;
+    if (anterior) anterior->prox = novo;
+    else m->mat[linha] = novo;
 
     return 0;
 }
