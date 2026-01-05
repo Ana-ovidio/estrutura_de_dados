@@ -66,15 +66,22 @@ int index_destroy(Index **idx) {
 Index *index_create_empty(int num_buckets) {
     if (num_buckets <= 0) return NULL;
 
-    Index *idx = (Index *)malloc(sizeof(Index));
-    idx->num_buckets = num_buckets;
-    idx->buckets = (Entrada **)malloc(num_buckets * sizeof(Entrada *));
+    Index *idx = malloc(sizeof(Index));
+    if (!idx) return NULL;
 
-    for (int i = 0; i < num_buckets; i++) 
+    idx->num_buckets = num_buckets;
+    idx->buckets = malloc(num_buckets * sizeof(Entrada *));
+    if (!idx->buckets) {
+        free(idx);
+        return NULL;
+    }
+
+    for (int i = 0; i < num_buckets; i++)
         idx->buckets[i] = NULL;
-        
+
     return idx;
 }
+
 
 /**
  * @brief Função de hash DJB2 para strings.
@@ -87,11 +94,13 @@ Index *index_create_empty(int num_buckets) {
  *
  * @return Valor de hash calculado.
  */
-long hash_djb2(const char *s) {
-    long h = 5381;
-    int c;
-    while ((c = *s++))
-        h = ((h << 5) + h) + (long)c; // h*33 + c
+unsigned long hash_djb2(const char *s) {
+    unsigned long h = 5381;
+    unsigned char c;
+
+    while ((c = (unsigned char)*s++)) {
+        h = (h * 33u) + c;
+    }
     return h;
 }
 
@@ -110,9 +119,13 @@ long hash_djb2(const char *s) {
  * @return NULL se a palavra não estiver presente no índice.
  */
 Entrada *busca_index(Index *idx, const char *key_norm, int *bucket_out) {
-    long h = hash_djb2((char *)key_norm);
+    if (!idx || !key_norm || idx->num_buckets <= 0) return NULL;
 
-    int b = (int)(h % idx->num_buckets);
+    unsigned long h = hash_djb2(key_norm);
+    int b = (int)(h % (unsigned long)idx->num_buckets);
+
+    if (b < 0 || b >= idx->num_buckets) return NULL;
+
     if (bucket_out) *bucket_out = b;
 
     Entrada *atual = idx->buckets[b];
@@ -123,3 +136,4 @@ Entrada *busca_index(Index *idx, const char *key_norm, int *bucket_out) {
     }
     return NULL;
 }
+

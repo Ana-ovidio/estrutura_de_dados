@@ -1,18 +1,20 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g3 -std=c11 -Iinclude
+CFLAGS = -Wall -Wextra -g3 -std=c11 -Icode/include
 
-SRC_DIR = src
-BUILD_DIR = build
-BIN_DIR = output
-DATA_DIR = data
+CODE_DIR = code
 
-SRC = $(wildcard $(SRC_DIR)/*.c)
+SRC_DIR   = $(CODE_DIR)/src
+BUILD_DIR = $(CODE_DIR)/build
+BIN_DIR   = $(CODE_DIR)/output
+DATA_DIR  = data
+MAIN = index.c
+SRC  = $(wildcard $(SRC_DIR)/*.c) $(MAIN)
 OBJ = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 
 BIN = $(BIN_DIR)/index
 
-KEYS = ../$(DATA_DIR)/keys.txt
-TEXT = ../$(DATA_DIR)/texto.txt
+KEYS = $(DATA_DIR)/keys.txt
+TEXT = $(DATA_DIR)/texto.txt
 
 .PHONY: all run clean
 
