@@ -3,9 +3,7 @@
 #include <math.h>
 
 #include "dataclass.h"
-#include "create.h"
-#include "print.h"
-#include "math.h"
+
 
 
 #define ASSERT(cond, msg)                     \
