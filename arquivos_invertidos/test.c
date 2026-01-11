@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "etl.h"
-#include "index_utils.h"
+#include "index.h"
 
 #define ASSERT(cond, msg)                        \
     do {                                        \
