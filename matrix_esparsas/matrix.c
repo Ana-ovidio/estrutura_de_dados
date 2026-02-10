@@ -269,7 +269,7 @@ int matrix_setelem(Matrix *m, int i, int j, float valor) {
     No *novo = malloc(sizeof *novo);
     if (!novo) return 1;
 
-    novo->coluna = j;      /* 1-based */
+    novo->coluna = j;      
     novo->valor  = valor;
     novo->prox   = atual;
 
@@ -453,7 +453,7 @@ int matrix_multiply(const Matrix *m, const Matrix *n, Matrix **r) {
         POINT pm = m->mat[i];
 
         while (pm) {
-            int k = pm->coluna; /* 1-based */
+            int k = pm->coluna; 
             if (k < 1 || k > n->linhas) {
                 matrix_destroy(res);
                 return 2;
